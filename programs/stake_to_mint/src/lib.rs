@@ -1,16 +1,16 @@
 use anchor_lang::prelude::*;
 
-declare_id!("6UcxQHi1hZZFr2MixGdXJR6oVvJ7FHL3bGVM89YiAzMV");
+declare_id!("BootCCPwrDw4VQorf7UCibk1HSjbWRDRDTWizRPiCyb");
 
 #[program]
 pub mod stake_to_mint {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
+    pub fn say_hello(_ctx: Context<SayHello>) -> Result<()> {
+        msg!("Ayush's first program");
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-pub struct Initialize {}
+pub struct SayHello {}

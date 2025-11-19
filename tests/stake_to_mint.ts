@@ -4,13 +4,16 @@ import { StakeToMint } from "../target/types/stake_to_mint";
 
 describe("stake_to_mint", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.AnchorProvider.env());
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
 
-  const program = anchor.workspace.stakeToMint as Program<StakeToMint>;
+  const program = anchor.workspace.StakeToMint as Program<StakeToMint>;
 
-  it("Is initialized!", async () => {
-    // Add your test here.
-    const tx = await program.methods.initialize().rpc();
-    console.log("Your transaction signature", tx);
+  it("Say hello!", async () => {
+    await program.methods
+      .sayHello()
+      .rpc();
+
+    console.log("Ayush's first program ran!");
   });
 });
