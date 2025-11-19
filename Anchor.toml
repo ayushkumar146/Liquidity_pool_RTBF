@@ -8,6 +8,10 @@ skip-lint = false
 [programs.localnet]
 stake_to_mint = "BootCCPwrDw4VQorf7UCibk1HSjbWRDRDTWizRPiCyb"
 
+[programs.devnet]
+stake_to_mint = "BootCCPwrDw4VQorf7UCibk1HSjbWRDRDTWizRPiCyb"
+
+
 [registry]
 url = "https://api.apr.dev"
 
