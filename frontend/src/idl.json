@@ -1,0 +1,26 @@
+{
+  "address": "BootCCPwrDw4VQorf7UCibk1HSjbWRDRDTWizRPiCyb",
+  "metadata": {
+    "name": "stake_to_mint",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "say_hello",
+      "discriminator": [
+        250,
+        163,
+        169,
+        119,
+        25,
+        42,
+        108,
+        31
+      ],
+      "accounts": [],
+      "args": []
+    }
+  ]
+}

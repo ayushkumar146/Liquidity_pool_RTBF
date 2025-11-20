@@ -1,35 +1,30 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import WalletConnection from "./components/WalletConnection";
+import Home from "./pages/Home";
+import Stake from "./pages/Stake";
+import Mint from "./pages/Mint";
+import SayHello from "./pages/SayHello";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <BrowserRouter>
+      <WalletConnection />   {/* Wallet always visible */}
+
+      <nav style={{ display: "flex", gap: "20px", padding: "10px" }}>
+        <Link to="/">Home</Link>
+        <Link to="/stake">Stake</Link>
+        <Link to="/mint">Mint</Link>
+        <Link to="/contract">Contract</Link>
+      </nav>
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/stake" element={<Stake />} />
+        <Route path="/mint" element={<Mint />} />
+        <Route path="/contract" element={<SayHello />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
