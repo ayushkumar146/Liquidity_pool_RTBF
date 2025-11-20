@@ -19,5 +19,8 @@ url = "https://api.apr.dev"
 cluster = "devnet"
 wallet = "~/.config/solana/id_new.json"
 
+[idl]
+size = 1024
+
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
