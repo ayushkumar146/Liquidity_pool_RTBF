@@ -3,7 +3,7 @@ import WalletConnection from "./components/WalletConnection";
 import Home from "./pages/Home";
 import Stake from "./pages/Stake";
 import Mint from "./pages/Mint";
-import SayHello from "./pages/SayHello";
+import SayHello, { StakeUI } from "./pages/SayHello";
 
 function App() {
   return (
@@ -15,6 +15,7 @@ function App() {
         <Link to="/stake">Stake</Link>
         <Link to="/mint">Mint</Link>
         <Link to="/contract">Contract</Link>
+        <Link to="/staketoken">Stake</Link>
       </nav>
 
       <Routes>
@@ -22,6 +23,7 @@ function App() {
         <Route path="/stake" element={<Stake />} />
         <Route path="/mint" element={<Mint />} />
         <Route path="/contract" element={<SayHello />} />
+        <Route path="/staketoken" element={<StakeUI />} />
       </Routes>
     </BrowserRouter>
   );
