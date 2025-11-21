@@ -1,11 +1,10 @@
-// SayHello.tsx (original code unchanged, then appended stake UI)
-
 import type { FC } from "react";
+import React, { useState } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { AnchorProvider, Program, BN } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
-
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import idlJson from "../idl.json"; // Your deployed IDL
 
 const idl: Idl = idlJson as Idl;
@@ -13,7 +12,7 @@ const programID = new PublicKey("BootCCPwrDw4VQorf7UCibk1HSjbWRDRDTWizRPiCyb");
 
 console.log("Program ID:", programID.toBase58());
 
-/* --------- YOUR ORIGINAL SayHello COMPONENT (VERBATIM) --------- */
+/* --------- ORIGINAL SayHello COMPONENT --------- */
 const SayHello: FC = () => {
   const { publicKey, signTransaction, signAllTransactions, connected } = useWallet();
   const { connection } = useConnection();
@@ -48,8 +47,7 @@ const SayHello: FC = () => {
         AnchorProvider.defaultOptions()
       );
 
-      // Create program object - use 2-argument constructor
-      // The IDL already contains the program address
+      // Create program object
       const program = new Program(idl, provider);
 
       // Call the say_hello RPC
@@ -73,37 +71,20 @@ const SayHello: FC = () => {
     </div>
   );
 };
-/* --------- END original component (untouched) --------- */
 
 export default SayHello;
 
-/* ------------------ APPEND: STAKING UI + CALL ------------------ */
-
-import React, { useState } from "react";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-
-/**
- * StakingUI component - append this to any page or render it below SayHello.
- * This uses the same getAnchorWallet / provider pattern as your original.
- *
- * Fields required:
- * - userTokenAccount: user's source token account (SPL token ATA)
- * - stakingTokenAccount: the vault / pool token account (SPL token account)
- * - liabilityMint: the mint pubkey for liability tokens (SPL Mint)
- * - userLiabilityAccount: user's token account for receiving liability tokens (ATA for liabilityMint)
- * - amount: number of tokens (uint64) to stake
- *
- * NOTE: The liability PDA in your Rust uses seeds [b"liability"], so we derive it here.
- */
+/* ------------------ STAKING UI ------------------ */
 export const StakeUI: FC = () => {
   const { publicKey, signTransaction, signAllTransactions, connected } = useWallet();
   const { connection } = useConnection();
 
+  // const [userTokenMint, setUserTokenMint] = useState<string>("");   // <-- ADD THIS
   const [userTokenAccount, setUserTokenAccount] = useState<string>("");
   const [stakingTokenAccount, setStakingTokenAccount] = useState<string>("");
   const [liabilityMint, setLiabilityMint] = useState<string>("");
   const [userLiabilityAccount, setUserLiabilityAccount] = useState<string>("");
-  const [amount, setAmount] = useState<string>(""); // take decimal/whole as string
+  const [amount, setAmount] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
   const getAnchorWallet = () => {
@@ -137,45 +118,87 @@ export const StakeUI: FC = () => {
     setBusy(true);
 
     try {
-      // parse inputs
+      console.log("=== Starting stake transaction ===");
+      console.log("Raw inputs:", {
+        userTokenAccount,
+
+        stakingTokenAccount,
+        liabilityMint,
+        userLiabilityAccount,
+        amount
+      });
+
+      // Parse inputs
       const userTokenPub = new PublicKey(userTokenAccount);
+      // const userMintPubkey = new PublicKey(userTokenMint); // Use direct mint input
       const stakingTokenPub = new PublicKey(stakingTokenAccount);
       const liabilityMintPub = new PublicKey(liabilityMint);
       const userLiabilityPub = new PublicKey(userLiabilityAccount);
+      
+      console.log("Parsed pubkeys successfully");
 
-      // derive liability PDA (same seed used in your Rust: [b"liability"])
-     const [liabilityPda, bump] = PublicKey.findProgramAddressSync(
-  [Buffer.from("liability")],
-  programID
-);
+      // Derive liability PDA - same as your Rust code
+      const [liabilityPda, bump] = PublicKey.findProgramAddressSync(
+        [Buffer.from("liability")],
+        programID
+      );
 
-      console.log("liabilityPda", liabilityPda.toBase58(), "bump", bump);
+      console.log("Liability PDA:", liabilityPda.toBase58(), "bump:", bump);
+
+      // Check if PDA already exists (optional - for logging only)
+      const accountInfo = await connection.getAccountInfo(liabilityPda);
+      console.log("PDA exists:", accountInfo !== null);
+      console.log("PDA will be", accountInfo ? "reused" : "initialized");
+
+      // Use the directly provided mint instead of extracting it
+      // console.log("User token mint:", userMintPubkey.toBase58());
 
       // Anchor provider
       const anchorWallet = getAnchorWallet();
-      const provider = new AnchorProvider(connection, anchorWallet, AnchorProvider.defaultOptions());
+      const provider = new AnchorProvider(
+        connection, 
+        anchorWallet, 
+        AnchorProvider.defaultOptions()
+      );
+      
+      // Create program with 2 arguments
       const program = new Program(idl, provider);
 
-      // convert amount to BN (u64)
-      // NOTE: this assumes 'amount' is smallest unit (e.g. raw token amount).
-      // If user-entered decimals, convert accordingly before calling.
-      const amountBn = new BN(amount.toString());
+      // Convert amount to BN (u64)
+      // Validate amount first
+      console.log("Amount value:", amount, "Type:", typeof amount);
+      
+      if (!amount || amount.trim() === "") {
+        alert("Please enter an amount");
+        setBusy(false);
+        return;
+      }
 
-      // call stake_tokens
+      const numAmount = Number(amount.trim());
+      if (isNaN(numAmount) || numAmount <= 0) {
+        alert("Please enter a valid positive number for amount");
+        setBusy(false);
+        return;
+      }
+
+      console.log("Creating BN from:", amount.trim());
+      const amountBn = new BN(amount.trim());
+      console.log("BN created successfully:", amountBn.toString());
+
+      // Call stake_tokens with the NEW account structure
       const tx = await program.methods
         .stakeTokens(amountBn)
         .accounts({
           user: anchorWallet.publicKey,
           userTokenAccount: userTokenPub,
+          // userTokenMint: userMintPubkey,  // NEW: Required for transfer_checked
           stakingTokenAccount: stakingTokenPub,
           liabilityAccount: liabilityPda,
           liabilityMint: liabilityMintPub,
           userLiabilityAccount: userLiabilityPub,
-          mintAuthority: liabilityPda, // your Rust expects the PDA here
+          mintAuthority: liabilityPda, // PDA is the mint authority
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
-          rent: new PublicKey("SysvarRent111111111111111111111111111111111"),
-
         })
         .rpc();
 
@@ -191,7 +214,21 @@ export const StakeUI: FC = () => {
 
   return (
     <div style={{ marginTop: 16, padding: 8, borderTop: "1px solid #ddd" }}>
-      <h3>Stake tokens (UI added)</h3>
+      <h3>Stake Tokens UI</h3>
+
+      <div style={{ marginBottom: 12, padding: 8, backgroundColor: "#f0f0f0", borderRadius: 4 }}>
+        <strong>Setup Required:</strong>
+        <ol style={{ margin: "8px 0", paddingLeft: 20, fontSize: "14px" }}>
+          <li>Create a liability token mint with PDA as mint authority</li>
+          <li>Create associated token accounts for all required tokens</li>
+          <li>Ensure the liability mint's mint authority is the PDA: <code style={{ fontSize: "12px", backgroundColor: "#fff", padding: "2px 4px" }}>liability PDA</code></li>
+        </ol>
+        <div style={{ fontSize: "12px", marginTop: 8 }}>
+          <strong>Liability PDA:</strong> <code style={{ backgroundColor: "#fff", padding: "2px 4px" }}>
+            {connected && PublicKey.findProgramAddressSync([Buffer.from("liability")], programID)[0].toBase58()}
+          </code>
+        </div>
+      </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 720 }}>
         <label>
@@ -199,37 +236,47 @@ export const StakeUI: FC = () => {
           <input
             value={userTokenAccount}
             onChange={(e) => setUserTokenAccount(e.target.value)}
-            placeholder="Eg: <your token account pubkey>"
+            placeholder="Your token account pubkey"
             style={{ width: "100%" }}
           />
         </label>
+
+        {/* <label>
+          User token mint (the mint of the staking token)
+          <input
+            value={userTokenMint}
+            onChange={(e) => setUserTokenMint(e.target.value)}
+            placeholder="Staking token mint address (e.g., 8D5pnS3GTWKfRfcvVfNpuUYjoFv88B2M7jEpYKvwBaEF)"
+            style={{ width: "100%" }}
+          />
+        </label> */}
 
         <label>
           Staking token account (vault)
           <input
             value={stakingTokenAccount}
             onChange={(e) => setStakingTokenAccount(e.target.value)}
-            placeholder="Eg: <vault token account pubkey>"
+            placeholder="Vault token account pubkey"
             style={{ width: "100%" }}
           />
         </label>
 
         <label>
-          Liability mint (the mint for liability tokens)
+          Liability mint
           <input
             value={liabilityMint}
             onChange={(e) => setLiabilityMint(e.target.value)}
-            placeholder="Eg: <liability mint pubkey>"
+            placeholder="Liability mint pubkey"
             style={{ width: "100%" }}
           />
         </label>
 
         <label>
-          User liability token account (destination for minted liability tokens)
+          User liability token account
           <input
             value={userLiabilityAccount}
             onChange={(e) => setUserLiabilityAccount(e.target.value)}
-            placeholder="Eg: <user liability token account pubkey>"
+            placeholder="User liability token account pubkey"
             style={{ width: "100%" }}
           />
         </label>
@@ -239,14 +286,54 @@ export const StakeUI: FC = () => {
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder="Eg: 1000 (raw amount in smallest units)"
+            placeholder="e.g., 1000"
             style={{ width: 240 }}
           />
         </label>
 
         <div>
           <button onClick={callStakeTokens} disabled={!connected || busy}>
-            {busy ? "Staking..." : "Stake tokens (call stake_tokens)"}
+            {busy ? "Staking..." : "Stake Tokens"}
+          </button>
+          <button 
+            onClick={async () => {
+              try {
+                const anchorWallet = getAnchorWallet();
+                const provider = new AnchorProvider(connection, anchorWallet, AnchorProvider.defaultOptions());
+                const program = new Program(idl, provider);
+
+                const userTokenPub = new PublicKey(userTokenAccount);
+                const userTokenAccountInfo = await connection.getParsedAccountInfo(userTokenPub);
+                const parsedData = (userTokenAccountInfo.value?.data as any)?.parsed;
+                const userMintPubkey = new PublicKey(parsedData.info.mint);
+                
+                const userMintAccountInfo = await connection.getAccountInfo(userMintPubkey);
+                const tokenProgramId = userMintAccountInfo.owner;
+
+                const tx = await program.methods
+                  .testAccounts()
+                  .accounts({
+                    user: anchorWallet.publicKey,
+                    userTokenAccount: userTokenPub,
+                    userTokenMint: userMintPubkey,
+                    stakingTokenAccount: new PublicKey(stakingTokenAccount),
+                    liabilityMint: new PublicKey(liabilityMint),
+                    userLiabilityAccount: new PublicKey(userLiabilityAccount),
+                    tokenProgram: tokenProgramId,
+                  })
+                  .rpc();
+
+                console.log("Test accounts tx:", tx);
+                alert("Test passed! tx: " + tx);
+              } catch (err: any) {
+                console.error("Test accounts error:", err);
+                alert("Test failed: " + err.message);
+              }
+            }}
+            disabled={!connected}
+            style={{ marginLeft: 8 }}
+          >
+            Test Accounts First
           </button>
         </div>
       </div>

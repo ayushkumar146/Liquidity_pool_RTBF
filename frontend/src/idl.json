@@ -21,6 +21,174 @@
       ],
       "accounts": [],
       "args": []
+    },
+    {
+      "name": "stake_tokens",
+      "discriminator": [
+        136,
+        126,
+        91,
+        162,
+        40,
+        131,
+        13,
+        127
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_token_account",
+          "writable": true
+        },
+        {
+          "name": "staking_token_account",
+          "writable": true
+        },
+        {
+          "name": "liability_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  105,
+                  97,
+                  98,
+                  105,
+                  108,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "liability_mint",
+          "writable": true
+        },
+        {
+          "name": "user_liability_account",
+          "writable": true
+        },
+        {
+          "name": "mint_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  105,
+                  97,
+                  98,
+                  105,
+                  108,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "test_accounts",
+      "discriminator": [
+        50,
+        219,
+        64,
+        10,
+        38,
+        150,
+        150,
+        43
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "signer": true
+        },
+        {
+          "name": "user_token_account"
+        },
+        {
+          "name": "user_token_mint"
+        },
+        {
+          "name": "staking_token_account"
+        },
+        {
+          "name": "liability_mint"
+        },
+        {
+          "name": "user_liability_account"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "LiabilityAccount",
+      "discriminator": [
+        134,
+        169,
+        21,
+        189,
+        214,
+        141,
+        20,
+        78
+      ]
+    }
+  ],
+  "types": [
+    {
+      "name": "LiabilityAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total_staked",
+            "type": "u64"
+          },
+          {
+            "name": "last_updated",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
     }
   ]
 }

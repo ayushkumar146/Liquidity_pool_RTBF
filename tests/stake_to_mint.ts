@@ -9,11 +9,19 @@ describe("stake_to_mint", () => {
 
   const program = anchor.workspace.StakeToMint as Program<StakeToMint>;
 
-  it("Say hello!", async () => {
-    await program.methods
-      .sayHello()
-      .rpc();
+  it("Runs say_hello and logs messages", async () => {
+    // Call the say_hello instruction
+    const tx = await program.methods.sayHello().rpc();
 
-    console.log("Ayush's first program ran!");
+    console.log("Transaction signature:", tx);
+
+    // Fetch transaction logs to verify msg! outputs
+    const confirmedTx = await provider.connection.getTransaction(tx, {
+      commitment: "confirmed",
+      maxSupportedTransactionVersion: 0,
+    });
+
+    console.log("Program logs:");
+    confirmedTx?.meta?.logMessages?.forEach((log) => console.log(log));
   });
 });
